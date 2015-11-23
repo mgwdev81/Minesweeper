@@ -22,9 +22,12 @@
 				view = new MinesweeperView(model, { 'grid' : $('#grid') });
 				controller = new MinesweeperController(model, view);
 
-				$("#gameOptions").hide();			
+				$("#gameOptions").hide();
 				view.render();
+				$("#grid").show();
 			}
+			
+			$("#grid").hide();
 			
 			// Events
 			// Start game button clicked
@@ -97,22 +100,48 @@
 		});
 	</script>
 </head>
-
 <body>
 	<div id="gridContainer">
 		<div id="gameOptions">
-			<select id="gameDifficulty">
-				<option value="Beginner">Beginner</option>
-				<option value="Intermediate">Intermediate</option>
-				<option value="Advanced">Advanced</option>
-				<option value="Custom">Custom</option>
-			</select>
-			Width<input id="width" type="text" name="width" value="9" size="1"> 
-			Height<input id="height" type="text" name="height" value="9" size="1"> 
-			Mines<input id="mineCount" type="text" name="mineCount" value="9" size="1">
-			<input id="startGameButton" type="submit" value="Start Game!">
+
+			<div class="gameOption">
+				<div class="gameOptionLabel">Difficulty</div>
+				<select id="gameDifficulty" class="gameOptionInput">
+					<option value="Beginner">Beginner</option>
+					<option value="Intermediate">Intermediate</option>
+					<option value="Advanced">Advanced</option>
+					<option value="Custom">Custom</option>
+				</select>
+			</div>
+
+			<div class="gameOption">
+				<div class="gameOptionLabel">Grid Width</div>
+				<input id="width" type="text" name="width" value="9" size="1" class="gameOptionInput">
+			</div>
+			
+			<div class="gameOption">
+				<div class="gameOptionLabel">Grid Height</div>
+				<input id="height" type="text" name="height" value="9" size="1" class="gameOptionInput">
+			</div>
+
+			<div class="gameOption">
+				<div class="gameOptionLabel">Mines</div>
+				<input id="mineCount" type="text" name="mineCount" value="9" size="1" class="gameOptionInput">
+			</div>
+			
+			<div class="gameOption">
+				<input id="startGameButton" type="submit" value="Start Game!">
+			</div>
+						
 		</div>
-		<div id="grid" />
+<!--
+		<div id='statusPanel'>
+			<div id='cellsRemaining'>Cells: 50</div>
+			<div id='mineCountStatus'>Mines: 60</div>
+			<div id='elapsedTime'>Timer: 00:00</div>
+		</div>
+-->
+		<div id="grid"/>
 	</div>
 </body>
 

@@ -1,4 +1,5 @@
-// TODO: Have view render once, then update view using jquery (to enable css transition effect).
+'use strict';
+
 // TODO: UX for game win.
 // TODO: UX for game loss.
 // TODO: Show a total of the cells left to reveal.
@@ -120,11 +121,16 @@ CellModel.prototype = {
 	
 	unflag: function () {
 		this.cellState = CellState.HIDDEN;
+	},
+	
+	hasFlag: function() {
+		return this.cellState === CellState.FLAGGED;
 	}
 }
 
 function GridModel(width, height, mineCount) {
 	this.cells = [];
+	this.cellsWithMines = [];
 	this.width = width;
 	this.height = height;
 	this.mineCount = mineCount;
@@ -139,6 +145,10 @@ GridModel.prototype = {
 	
 	getCells: function() {
 		return this.cells;
+	},
+	
+	getCell: function(x, y) {
+		return this.cells[x][y];	
 	},
 	
 	initCells: function () {
@@ -158,6 +168,7 @@ GridModel.prototype = {
 			cell.getAdjacentCells().forEach(function (c) {
 				c.adjacentMines++;
 			});
+			this.cellsWithMines.push(cell);
 		}
 	},
 	
@@ -171,6 +182,12 @@ GridModel.prototype = {
 		
 		if (cell.hasMine()) {
 			cell.detonateMine();
+
+			// Reveal all mines
+			for(var m = 0; m < this.cellsWithMines.length; m++) {
+				var otherMine = this.cellsWithMines[m];
+				otherMine.detonateMine();
+			}
 			this.gameState = GameState.LOST;
 			console.log("GAME LOST!");
 		}
@@ -192,15 +209,15 @@ GridModel.prototype = {
 	
 	createMine: function (xMin, yMin) {
 		var mine;
-
 		do { mine = this.getRandomCoordinate(xMin, yMin); }
 		while (this.cells[mine.x][mine.y].hasMine());
 
 		return mine;
 	},
 	
-	hasWon: function() {
-		return (this.cellsRevealedCount === (this.cells.length - this.mineCount));
+	hasWon: function() {		
+		return (this.cellsRevealedCount === 
+			((this.cells.length * this.cells[0].length) - this.mineCount));
 	},
 
 	getRandomCoordinate: function (xMin, yMin) {
@@ -298,12 +315,15 @@ function MinesweeperController(model, view) {
 
 MinesweeperController.prototype = {
 	leftClickOnGridCell: function (x, y) {
+		if(this.model.gameState !== GameState.INPROGRESS ||
+		this.model.getCell(x, y).hasFlag()) return;
 		this.model.revealCell(x, y);
 		// TODO: Have View listen to a change event raised by model instead of calling render here?
 		this.view.render(); 
 	},
 	
 	rightClickOnGridCell: function (x, y) {
+		if(this.model.gameState !== GameState.INPROGRESS) return;
 		this.model.flagCell(x, y);
 		// TODO: Have View listen to a change event raised by model instead of calling render here?
 		this.view.render();

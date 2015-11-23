@@ -20,17 +20,65 @@ body {
 }
 
 #gameOptions {
+    margin: auto;
+  display: flex;
+  flex-direction: column;
+  
+  align-items: center;
+  justify-content: center;
+  
+  
   color: white;
   display: flex;
   margin: auto;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+}
+
+.gameOption {
+  display: flex;
+  flex-direction: row;
+  height: 25px;
+  min-width: 200px;
+}
+
+.gameOptionLabel {
+  width: 100px;
+  text-align: right;
+  padding-right: 5px;
+}
+
+.gameOptionInput {
+  width: 100px;
+  text-align: left;
+  height: 22px;
+}
+
+#startGameButton {
+  width: 100%;
+}
+
+#statusPanel {
+  display: flex;
+  flex-direction: row;
+  margin: auto;
+}
+
+#cellsRemaining, #mineCountStatus, #elapsedTime {
+  height: 25px;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  color: white;
 }
 
 #grid {
   margin: auto;
   display: flex;
   flex-direction: column;
+
   
   align-items: center;
   justify-content: center;

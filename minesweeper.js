@@ -2,10 +2,11 @@
 
 // TODO: UX for game win.
 // TODO: UX for game loss.
-// TODO: Show a total of the cells left to reveal.
-// TODO: Show a count of mines.
 // TODO: Create a timer which counts how long it takes for the user to win the game.
 // TODO: Tidy up css and id naming.
+// TODO: Apply AirBnB style guide.
+// TODO: https://fortawesome.github.io/Font-Awesome/icons/
+// TODO: Use a templating plugin for building html?
 
 var GameState = Object.freeze({
 	INPROGRESS: 'INPROGRESS',
@@ -135,6 +136,7 @@ function GridModel(width, height, mineCount) {
 	this.height = height;
 	this.mineCount = mineCount;
 	this.cellsRevealedCount = 0;
+	this.flagsAvailable = mineCount;
 	this.gameState = GameState.INPROGRESS;
 	
 	this.initCells();
@@ -179,6 +181,12 @@ GridModel.prototype = {
 		
 		cell.cellState = CellState.REVEALED;
 		this.cellsRevealedCount++;
+		
+		if (this.cellsRevealedCount === 1) {
+			// This is the first move made by player,
+			// so we set the start time.
+			this.startTime = Date.now();
+		}
 		
 		if (cell.hasMine()) {
 			cell.detonateMine();
@@ -235,9 +243,11 @@ GridModel.prototype = {
 		var cell = this.cells[x][y];
 		if (cell.cellState !== CellState.REVEALED && cell.cellState !== CellState.FLAGGED) {
 			cell.flag();
+			this.flagsAvailable--;
 		}
 		else if (cell.cellState === CellState.FLAGGED) {
 			cell.unflag();
+			this.flagsAvailable++;
 		}
 	}
 }
@@ -247,6 +257,7 @@ GridModel.prototype = {
 function MinesweeperView(model, elements) {
 	this.model = model;
 	this.elements = elements;
+	this.elapsedTimeInterval = 1000;
 }
 
 MinesweeperView.prototype = {
@@ -257,13 +268,17 @@ MinesweeperView.prototype = {
 		var html = "";
 		grid.html("");
 
+		html += "<div id='statusPanel'>";
+		html +=	"<div id='flagsAvailable'>Flags: <b>" + this.model.flagsAvailable + "</b></div>";
+		html +=	"<div id='status'></div>";
+		html +=	"<div id='elapsedTime'></div>";
+		html += "</div>";
+
 		for (var y = 0; y < this.model.height; y++) {
 			
 			html += "<div class='gridRow'>";
 			
 			for (var x = 0; x < this.model.width; x++) {
-
-				// TODO: Move rendering of a cell to the cell model.
 				var cell = cells[x][y];
 				var cellClass = "gridCell";
 				var cellText = "";
@@ -293,6 +308,18 @@ MinesweeperView.prototype = {
 						case 4:
 							cellClass += " fourMines";
 							break;
+						case 5:
+							cellClass += " fiveMines";
+							break;
+						case 6:
+							cellClass += " sixMines";
+							break;
+						case 7:
+							cellClass += " sevenMines";
+							break;
+						case 8:
+							cellClass += " eightMines";
+							break;
 					}
 					cellText = (cell.adjacentMines > 0) ? cell.adjacentMines : "";
 				}
@@ -302,7 +329,40 @@ MinesweeperView.prototype = {
 			html += "</div>";
 		}
 
+		this.stopElapsedTimeUpdate();
 		grid.html(html);
+		this.startElapsedTimeUpdate();
+	},
+	
+	startElapsedTimeUpdate: function () {
+		
+		if (typeof this.model.startTime === 'undefined' 
+			|| this.model.gameState !== GameState.INPROGRESS)
+			return;
+		
+		var thatModel = this.model;
+		this.intervalId = setInterval(function () {
+
+			// TODO: Extract this into a separate function			
+			var elapsedTime = Date.now() - thatModel.startTime;
+			var hours = Math.floor(elapsedTime / 1000 / 60 / 60);
+			elapsedTime -= hours * 1000 * 60 * 60;
+			var minutes = Math.floor(elapsedTime / 1000 / 60);
+			elapsedTime -= minutes * 1000 * 60;
+			var seconds = Math.floor(elapsedTime / 1000);
+			elapsedTime -= seconds * 1000;
+			
+			var mm = ("0" + minutes).slice(-2);
+			var ss = ("0" + seconds).slice(-2);
+			console.log(hours + ":" + mm + ":" + ss);
+			$('#elapsedTime').html(hours + ":" + mm + ":" + ss);
+		
+		}, this.elapsedTimeInterval);
+	},
+	
+	stopElapsedTimeUpdate: function() {
+		if (this.intervalId === undefined) return;
+		clearInterval(this.intervalId);
 	}
 }
 
@@ -315,17 +375,18 @@ function MinesweeperController(model, view) {
 
 MinesweeperController.prototype = {
 	leftClickOnGridCell: function (x, y) {
-		if(this.model.gameState !== GameState.INPROGRESS ||
-		this.model.getCell(x, y).hasFlag()) return;
+		if (this.model.gameState !== GameState.INPROGRESS
+			|| this.model.getCell(x, y).hasFlag()) return;
+
 		this.model.revealCell(x, y);
-		// TODO: Have View listen to a change event raised by model instead of calling render here?
 		this.view.render(); 
 	},
 	
 	rightClickOnGridCell: function (x, y) {
-		if(this.model.gameState !== GameState.INPROGRESS) return;
+		if (this.model.gameState !== GameState.INPROGRESS
+			|| (this.model.flagsAvailable === 0 && !this.model.getCell(x, y).hasFlag())) return;
+		
 		this.model.flagCell(x, y);
-		// TODO: Have View listen to a change event raised by model instead of calling render here?
 		this.view.render();
 	}
 }

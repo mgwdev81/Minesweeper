@@ -1,15 +1,14 @@
 'use strict';
 
-// TODO: UX for game win.
-// TODO: UX for game loss.
-// TODO: Create a timer which counts how long it takes for the user to win the game.
+// TODO: Move status panel outside of grid so that it can be rendered independently.
 // TODO: Tidy up css and id naming.
 // TODO: Apply AirBnB style guide.
-// TODO: https://fortawesome.github.io/Font-Awesome/icons/
 // TODO: Use a templating plugin for building html?
+// TODO: Store font package locally to reduce initial load time?
 
 var GameState = Object.freeze({
-	INPROGRESS: 'INPROGRESS',
+	NOTSTARTED: 'NOTSTARTED',
+	STARTED: 'STARTED',
 	WON: 'WON',
 	LOST: 'LOST'
 })
@@ -137,7 +136,7 @@ function GridModel(width, height, mineCount) {
 	this.mineCount = mineCount;
 	this.cellsRevealedCount = 0;
 	this.flagsAvailable = mineCount;
-	this.gameState = GameState.INPROGRESS;
+	this.gameState = GameState.NOTSTARTED;
 	
 	this.initCells();
 	this.initMines();
@@ -177,16 +176,15 @@ GridModel.prototype = {
 	revealCell: function (x, y) {
 		var cell = this.cells[x][y];
 		
+		if (this.gameState === GameState.NOTSTARTED) {
+			this.gameState = GameState.STARTED;
+			this.startTime = Date.now();
+		}
+		
 		if (cell.cellState === CellState.REVEALED) return;
 		
 		cell.cellState = CellState.REVEALED;
 		this.cellsRevealedCount++;
-		
-		if (this.cellsRevealedCount === 1) {
-			// This is the first move made by player,
-			// so we set the start time.
-			this.startTime = Date.now();
-		}
 		
 		if (cell.hasMine()) {
 			cell.detonateMine();
@@ -197,10 +195,12 @@ GridModel.prototype = {
 				otherMine.detonateMine();
 			}
 			this.gameState = GameState.LOST;
+			this.endTime = Date.now();
 			console.log("GAME LOST!");
 		}
 		else if (this.hasWon()) {
 			this.gameState = GameState.WON;
+			this.endTime = Date.now();
 			console.log("GAME WON!");
 		}
 		else if (cell.adjacentMines === 0) {
@@ -241,6 +241,12 @@ GridModel.prototype = {
 	
 	flagCell: function (x, y) {
 		var cell = this.cells[x][y];
+		
+		if (this.gameState === GameState.NOTSTARTED) {
+			this.gameState = GameState.STARTED;
+			this.startTime = Date.now();
+		}
+		
 		if (cell.cellState !== CellState.REVEALED && cell.cellState !== CellState.FLAGGED) {
 			cell.flag();
 			this.flagsAvailable--;
@@ -285,11 +291,13 @@ MinesweeperView.prototype = {
 
 				if (cell.hasMine() && cell.mineState === MineState.DETONATED) {
 					cellClass += " mineDetonated";
-					cellText = "B";
+					cellText = "<span class='fa fa-bomb'></span>";
+					//cellText = "B";
 				} 
 				else if (cell.cellState === CellState.FLAGGED) {
 					cellClass += " flagged";
-					cellText = "F";
+					cellText = "<span class='fa fa-flag'></span>"
+					//cellText = "F";
 				}
 				else if (cell.cellState === CellState.REVEALED) {
 					switch (cell.adjacentMines) {
@@ -329,22 +337,21 @@ MinesweeperView.prototype = {
 			html += "</div>";
 		}
 
-		this.stopElapsedTimeUpdate();
+		this.stopElapsedTimeUpdater(); 		// TODO: Improve this and move this call elsewhere.
 		grid.html(html);
-		this.startElapsedTimeUpdate();
+		this.startElapsedTimeUpdater(); 	// TODO: Improve this and move this call elsewhere.
+		
+		if(this.model.gameState === GameState.WON) {
+			$('#status').text("Mission Succeeded!");
+		} else if (this.model.gameState === GameState.LOST) {
+			$('#status').text("Mission Failed");
+		}
 	},
 	
-	startElapsedTimeUpdate: function () {
+	startElapsedTimeUpdater: function () {
 		
-		if (typeof this.model.startTime === 'undefined' 
-			|| this.model.gameState !== GameState.INPROGRESS)
-			return;
-		
-		var thatModel = this.model;
-		this.intervalId = setInterval(function () {
-
-			// TODO: Extract this into a separate function			
-			var elapsedTime = Date.now() - thatModel.startTime;
+		var getFormattedElapsedTime = function(startTime, endTime) {			
+			var elapsedTime = endTime - startTime;
 			var hours = Math.floor(elapsedTime / 1000 / 60 / 60);
 			elapsedTime -= hours * 1000 * 60 * 60;
 			var minutes = Math.floor(elapsedTime / 1000 / 60);
@@ -354,16 +361,29 @@ MinesweeperView.prototype = {
 			
 			var mm = ("0" + minutes).slice(-2);
 			var ss = ("0" + seconds).slice(-2);
-			console.log(hours + ":" + mm + ":" + ss);
-			$('#elapsedTime').html(hours + ":" + mm + ":" + ss);
+			
+			return hours + ":" + mm + ":" + ss;
+		}		
 		
+		if (this.model.gameState === GameState.NOTSTARTED) {
+			$('#elapsedTime').html("0:00:00");
+			return;
+		} else if (this.model.gameState === GameState.LOST
+			|| this.model.gameState === GameState.WON) {
+			$('#elapsedTime').html(getFormattedElapsedTime(this.model.startTime, this.model.endTime));
+			return;
+		}
+		
+		var thatModel = this.model;
+		this.intervalId = setInterval(function () {
+			$('#elapsedTime').html(getFormattedElapsedTime(thatModel.startTime, Date.now()));
 		}, this.elapsedTimeInterval);
 	},
 	
-	stopElapsedTimeUpdate: function() {
+	stopElapsedTimeUpdater: function() {
 		if (this.intervalId === undefined) return;
 		clearInterval(this.intervalId);
-	}
+	},
 }
 
 
@@ -375,7 +395,8 @@ function MinesweeperController(model, view) {
 
 MinesweeperController.prototype = {
 	leftClickOnGridCell: function (x, y) {
-		if (this.model.gameState !== GameState.INPROGRESS
+		if (this.model.gameState === GameState.LOST
+			|| this.model.gameState === GameState.WON
 			|| this.model.getCell(x, y).hasFlag()) return;
 
 		this.model.revealCell(x, y);
@@ -383,7 +404,8 @@ MinesweeperController.prototype = {
 	},
 	
 	rightClickOnGridCell: function (x, y) {
-		if (this.model.gameState !== GameState.INPROGRESS
+		if (this.model.gameState === GameState.LOST
+			|| this.model.gameState === GameState.WON
 			|| (this.model.flagsAvailable === 0 && !this.model.getCell(x, y).hasFlag())) return;
 		
 		this.model.flagCell(x, y);

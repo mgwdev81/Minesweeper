@@ -1,8 +1,6 @@
-// TODO: Move status panel outside of grid so that it can be rendered independently.
 // TODO: Tidy up css and id naming.
 // TODO: Apply AirBnB style guide.
 // TODO: Use a templating plugin for building html?
-// TODO: Store font package locally to reduce initial load time?
 
 var GameState = Object.freeze({
 	NOTSTARTED: 'NOTSTARTED',
@@ -25,6 +23,7 @@ var MineState = Object.freeze({
 var model;
 var view;
 var controller;
+
 var startTime;
 var endTime;
 var intervalId;
@@ -32,13 +31,13 @@ var timeInterval = 1000;
 
 function init() {
 
-	var width = $('#width').val();
-	var height = $('#height').val();
-	var mines = $('#mineCount').val();
-
 	initTimer();
 		
-	model = new GridModel(width, height, mines);
+	model = new GridModel(
+		$('#width').val(), 
+		$('#height').val(), 
+		$('#mineCount').val());
+
 	view = new MinesweeperView(model, { 'grid' : $('#grid') });
 	controller = new MinesweeperController(model, view);
 

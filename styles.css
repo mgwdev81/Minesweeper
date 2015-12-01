@@ -50,13 +50,14 @@ body {
 }
 
 .gameOptionLabel {
-  width: 50px;
+  width: 40px;
   text-align: right;
   padding-right: 5px;
+  line-height: 24px;
 }
 
 .gameOptionInput {
-  width: 50px;
+  width: 30px;
   text-align: left;
 }
 

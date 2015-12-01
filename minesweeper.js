@@ -25,16 +25,19 @@ var MineState = Object.freeze({
 var model;
 var view;
 var controller;
-
+var startTime;
+var endTime;
+var intervalId;
+var timeInterval = 1000;
 
 function init() {
 
 	var width = $('#width').val() || 9;
 	var height = $('#height').val() || 9;
 	var mines = $('#mineCount').val() || 9;
-	
-	initEvents();
-	
+
+	initTimer();
+		
 	model = new GridModel(width, height, mines);
 	view = new MinesweeperView(model, { 'grid' : $('#grid') });
 	controller = new MinesweeperController(model, view);
@@ -42,6 +45,18 @@ function init() {
 	view.render();
 }
 
+function initTimer() {
+	startTime = undefined;
+	endTime = undefined;
+
+	if (intervalId !== undefined) {
+		clearInterval(intervalId);
+	}
+
+	intervalId = setInterval(function () {
+		updateElapsedTimeDisplay();
+	}, timeInterval);
+}
 
 function initEvents() {
 	
@@ -224,8 +239,6 @@ function GridModel(width, height, mineCount) {
 	this.cellsRevealedCount = 0;
 	this.flagsAvailable = mineCount;
 	this.gameState = GameState.NOTSTARTED;
-	this.startTime = 0;
-	this.endTime = 0;
 	
 	this.initCells();
 	this.initMines();
@@ -267,7 +280,7 @@ GridModel.prototype = {
 		
 		if (this.gameState === GameState.NOTSTARTED) {
 			this.gameState = GameState.STARTED;
-			this.startTime = Date.now();
+			startTime = Date.now();
 		}
 		
 		if (cell.cellState === CellState.REVEALED) return;
@@ -284,12 +297,12 @@ GridModel.prototype = {
 				otherMine.detonateMine();
 			}
 			this.gameState = GameState.LOST;
-			this.endTime = Date.now();
+			endTime = Date.now();
 			console.log("GAME LOST!");
 		}
 		else if (this.hasWon()) {
 			this.gameState = GameState.WON;
-			this.endTime = Date.now();
+			endTime = Date.now();
 			console.log("GAME WON!");
 		}
 		else if (cell.adjacentMines === 0) {
@@ -333,7 +346,7 @@ GridModel.prototype = {
 		
 		if (this.gameState === GameState.NOTSTARTED) {
 			this.gameState = GameState.STARTED;
-			this.startTime = Date.now();
+			startTime = Date.now();
 		}
 		
 		if (cell.cellState !== CellState.REVEALED && cell.cellState !== CellState.FLAGGED) {
@@ -352,7 +365,6 @@ GridModel.prototype = {
 function MinesweeperView(model, elements) {
 	this.model = model;
 	this.elements = elements;
-	this.elapsedTimeInterval = 1000;
 }
 
 MinesweeperView.prototype = {
@@ -424,54 +436,44 @@ MinesweeperView.prototype = {
 			html += "</div>";
 		}
 
-		this.stopElapsedTimeUpdater(); 		// TODO: Improve this and move this call elsewhere.
 		grid.html(html);
-		this.startElapsedTimeUpdater(); 	// TODO: Improve this and move this call elsewhere.
 		
 		if(this.model.gameState === GameState.WON) {
 			$('#status').text("Mission Succeeded!");
 		} else if (this.model.gameState === GameState.LOST) {
 			$('#status').text("Mission Failed");
 		}
-	},
+	}
+}
+
+
+function getFormattedElapsedTime(startTime, endTime) {
 	
-	startElapsedTimeUpdater: function () {
-		
-		var getFormattedElapsedTime = function(startTime, endTime) {			
-			var elapsedTime = endTime - startTime;
-			var hours = Math.floor(elapsedTime / 1000 / 60 / 60);
-			elapsedTime -= hours * 1000 * 60 * 60;
-			var minutes = Math.floor(elapsedTime / 1000 / 60);
-			elapsedTime -= minutes * 1000 * 60;
-			var seconds = Math.floor(elapsedTime / 1000);
-			elapsedTime -= seconds * 1000;
-			
-			var mm = ("0" + minutes).slice(-2);
-			var ss = ("0" + seconds).slice(-2);
-			
-			return hours + ":" + mm + ":" + ss;
-		}		
-		
-		if (this.model.gameState === GameState.NOTSTARTED) {
-			$("#elapsedTimeValue").text("0:00:00");
-			return;
-		} else if (this.model.gameState === GameState.LOST
-			|| this.model.gameState === GameState.WON) {
-			$("#elapsedTimeValue").text(
-				getFormattedElapsedTime(this.model.startTime, this.model.endTime));
-			return;
-		}
-		
-		var thatModel = this.model;
-		this.intervalId = setInterval(function () {
-			$("#elapsedTimeValue").text(
-				getFormattedElapsedTime(thatModel.startTime, Date.now()));
-		}, this.elapsedTimeInterval);
-	},
+	var elapsedTime = endTime - startTime;
 	
-	stopElapsedTimeUpdater: function() {
-		if (this.intervalId === undefined) return;
-		clearInterval(this.intervalId);
+	var hours = Math.floor(elapsedTime / 1000 / 60 / 60);
+	elapsedTime -= hours * 1000 * 60 * 60;
+	
+	var minutes = Math.floor(elapsedTime / 1000 / 60);
+	elapsedTime -= minutes * 1000 * 60;
+	
+	var seconds = Math.floor(elapsedTime / 1000);
+	elapsedTime -= seconds * 1000;
+
+	var mm = ("0" + minutes).slice(-2);
+	var ss = ("0" + seconds).slice(-2);
+
+	return hours + ":" + mm + ":" + ss;
+}
+
+
+function updateElapsedTimeDisplay() {
+	if (typeof startTime === "undefined") {
+		$("#elapsedTimeValue").text("0:00:00");
+	} else if (typeof endTime === "undefined") {
+		$("#elapsedTimeValue").text(getFormattedElapsedTime(startTime, Date.now()));
+	} else {
+		$("#elapsedTimeValue").text(getFormattedElapsedTime(startTime, endTime));
 	}
 }
 

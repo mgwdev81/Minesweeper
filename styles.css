@@ -14,48 +14,49 @@ body {
 }
 
 #gridContainer {
-  height: 100%;
+  height: 90%;
   display: flex;
   flex-direction: column;
 }
 
-#gameOptions {
-  margin: auto;
+#headerPanel {
   display: flex;
-  flex-direction: column;
-  
-  align-items: center;
-  justify-content: center;
-  
+  flex-direction: row;
   color: white;
-  display: flex;
   margin: auto;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  border-bottom: solid 0.5px white;
+  padding: 4px;
+}
+
+#gameTitle {
+  font-weight: bold;
+}
+
+#gameOptions {
+  display: flex;
+  flex-direction: row;
+  margin-left: auto;
 }
 
 .gameOption {
   display: flex;
   flex-direction: row;
-  height: 25px;
-  min-width: 200px;
+  padding-right: 5px;
 }
 
 .gameOptionLabel {
-  width: 100px;
+  width: 50px;
   text-align: right;
   padding-right: 5px;
 }
 
 .gameOptionInput {
-  width: 100px;
+  width: 50px;
   text-align: left;
-  height: 22px;
 }
 
 #startGameButton {
-  width: 100%;
+  /*width: 100%;*/
 }
 
 #statusPanel {

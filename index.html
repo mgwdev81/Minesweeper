@@ -3,41 +3,32 @@
 
 <head>
 	<title>Minesweeper</title>
-	<link rel="stylesheet" href="styles.css">
 	<link rel="stylesheet" href="fonts/font-awesome-4.4.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="styles.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="minesweeper.js"></script>
 	<script>
 		$(document).ready(function() {
-			
-			var model;
-			var view;
+
 			var controller;
 			
-			function init(options) {
-				var width = options.width;
-				var height = options.height;
-				var mines = options.mines;
+			function init() {
+								
+				var width = $('#width').val() || 9;
+				var height = $('#height').val() || 9;
+				var mines = $('#mineCount').val() || 9;
 				
-				model = new GridModel(width, height, mines);
-				view = new MinesweeperView(model, { 'grid' : $('#grid') });
+				var model = new GridModel(width, height, mines);
+				var view = new MinesweeperView(model, { 'grid' : $('#grid') });
 				controller = new MinesweeperController(model, view);
 
-				$("#gameOptions").hide();
 				view.render();
-				$("#grid").show();
 			}
-			
-			$("#grid").hide();
 			
 			// Events
 			// Start game button clicked
 			$('#startGameButton').on('click', function () {				
-				init({
-					width: $('#width').val(),
-					height: $('#height').val(),
-					mines: $('#mineCount').val()
-				});
+				init();
 			});
 			
 			// Left mouse click on grid cell
@@ -98,30 +89,32 @@
 			document.addEventListener("rightClickOnGridCellEvent", function (event) {
 				controller.rightClickOnGridCell(event.detail.x, event.detail.y);
 			});
+			
+			// Start game
+			init();
 		});
 	</script>
 </head>
 <body>
-	<div id="gridContainer">
+	<div id="headerPanel">
+		<div id="gameTitle">MINESWEEPER</div>
 		<div id="gameOptions">
-
 			<div class="gameOption">
 				<div class="gameOptionLabel">Difficulty</div>
-				<select id="gameDifficulty" class="gameOptionInput">
+				<select id="gameDifficulty">
 					<option value="Beginner">Beginner</option>
 					<option value="Intermediate">Intermediate</option>
 					<option value="Advanced">Advanced</option>
 					<option value="Custom">Custom</option>
 				</select>
 			</div>
-
 			<div class="gameOption">
-				<div class="gameOptionLabel">Grid Width</div>
+				<div class="gameOptionLabel">Width</div>
 				<input id="width" type="text" name="width" value="9" size="1" class="gameOptionInput">
 			</div>
-			
+
 			<div class="gameOption">
-				<div class="gameOptionLabel">Grid Height</div>
+				<div class="gameOptionLabel">Height</div>
 				<input id="height" type="text" name="height" value="9" size="1" class="gameOptionInput">
 			</div>
 
@@ -129,14 +122,14 @@
 				<div class="gameOptionLabel">Mines</div>
 				<input id="mineCount" type="text" name="mineCount" value="9" size="1" class="gameOptionInput">
 			</div>
-			
+
 			<div class="gameOption">
-				<input id="startGameButton" type="submit" value="Start Game!">
+				<input id="startGameButton" type="submit" value="Start Game">
 			</div>
-						
 		</div>
-		
-		<div id="grid"/>
+	</div>
+	<div id="gridContainer">
+		<div id="grid"></div>
 	</div>
 </body>
 

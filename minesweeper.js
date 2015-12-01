@@ -1,5 +1,3 @@
-'use strict';
-
 // TODO: Move status panel outside of grid so that it can be rendered independently.
 // TODO: Tidy up css and id naming.
 // TODO: Apply AirBnB style guide.
@@ -23,6 +21,23 @@ var MineState = Object.freeze({
 	UNDETONATED: 'UNDETONATED',
 	DETONATED: 'DETONATED'
 });
+
+
+var controller;
+
+
+function init() {
+					
+	var width = $('#width').val() || 9;
+	var height = $('#height').val() || 9;
+	var mines = $('#mineCount').val() || 9;
+	
+	var model = new GridModel(width, height, mines);
+	var view = new MinesweeperView(model, { 'grid' : $('#grid') });
+	controller = new MinesweeperController(model, view);
+
+	view.render();
+}
 
 
 // Models
@@ -137,6 +152,8 @@ function GridModel(width, height, mineCount) {
 	this.cellsRevealedCount = 0;
 	this.flagsAvailable = mineCount;
 	this.gameState = GameState.NOTSTARTED;
+	this.startTime = 0;
+	this.endTime = 0;
 	
 	this.initCells();
 	this.initMines();
@@ -383,7 +400,7 @@ MinesweeperView.prototype = {
 	stopElapsedTimeUpdater: function() {
 		if (this.intervalId === undefined) return;
 		clearInterval(this.intervalId);
-	},
+	}
 }
 
 
@@ -412,3 +429,69 @@ MinesweeperController.prototype = {
 		this.view.render();
 	}
 }
+
+
+// Events
+// Start game button clicked
+$('#startGameButton').on('click', function () {				
+	init();
+});
+
+// Left mouse click on grid cell
+$(document).on("click", ".gridCell", function (event) {
+	var leftClickOnGridCellEvent = new CustomEvent("leftClickOnGridCellEvent", {
+		detail: { x: event.target.dataset.x, y: event.target.dataset.y } 
+	});
+	document.dispatchEvent(leftClickOnGridCellEvent);
+});
+
+// Right mouse click on grid cell
+$(document).on("contextmenu", ".gridCell", function(event) {
+	// Stops context menu from appearing
+	event.preventDefault(); 
+	var rightClickOnGridCellEvent = new CustomEvent("rightClickOnGridCellEvent", { 
+		detail: { x: event.target.dataset.x, y: event.target.dataset.y } 
+	});
+	document.dispatchEvent(rightClickOnGridCellEvent);
+});
+
+// Game difficulty changed
+$("#gameDifficulty").on("change", function (event) {
+	var gameDifficultySelect = document.getElementById("gameDifficulty");
+	var difficulty = gameDifficultySelect.options[gameDifficultySelect.selectedIndex].value;
+	
+	// TODO: Make input text fields editable only when custom is selected.
+	switch(difficulty) {
+		case "Beginner":
+			$('#width').val("9");
+			$('#height').val("9");
+			$('#mineCount').val("10");
+			break;
+		case "Intermediate":
+			$('#width').val("16");
+			$('#height').val("16");
+			$('#mineCount').val("40");
+			break;
+		case "Advanced":
+			$('#width').val("30");
+			$('#height').val("16");
+			$('#mineCount').val("99");
+			break;
+		case "Custom":
+			$('#width').val("30");
+			$('#height').val("16");
+			$('#mineCount').val("99");
+			break;
+	}
+});
+
+// Listeners
+// Left mouse click on grid cell
+document.addEventListener("leftClickOnGridCellEvent", function (event) {
+	controller.leftClickOnGridCell(event.detail.x, event.detail.y);
+});
+
+// Right mouse click on grid cell
+document.addEventListener("rightClickOnGridCellEvent", function (event) {
+	controller.rightClickOnGridCell(event.detail.x, event.detail.y);
+});

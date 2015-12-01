@@ -32,9 +32,9 @@ var timeInterval = 1000;
 
 function init() {
 
-	var width = $('#width').val() || 9;
-	var height = $('#height').val() || 9;
-	var mines = $('#mineCount').val() || 9;
+	var width = $('#width').val();
+	var height = $('#height').val();
+	var mines = $('#mineCount').val();
 
 	initTimer();
 		
@@ -309,9 +309,10 @@ GridModel.prototype = {
 			// Recursively reveal adjacent cells that have no adjacent mines				
 			var adjacentCells = cell.getAdjacentCells();
 			for (var a = 0; a < adjacentCells.length; a++) {
-				if (adjacentCells[a].cellState === CellState.HIDDEN &&
-					typeof adjacentCells[a].mineState === 'undefined') {
-					this.revealCell(adjacentCells[a].x, adjacentCells[a].y);
+				var adjacentCell = adjacentCells[a];
+				if (adjacentCell.cellState === CellState.HIDDEN
+					&& !adjacentCell.hasMine()) {
+					this.revealCell(adjacentCell.x, adjacentCell.y);
 				}
 			}
 		}
@@ -349,7 +350,8 @@ GridModel.prototype = {
 			startTime = Date.now();
 		}
 		
-		if (cell.cellState !== CellState.REVEALED && cell.cellState !== CellState.FLAGGED) {
+		if (cell.cellState !== CellState.REVEALED
+			&& cell.cellState !== CellState.FLAGGED) {
 			cell.flag();
 			this.flagsAvailable--;
 		}
@@ -439,9 +441,9 @@ MinesweeperView.prototype = {
 		grid.html(html);
 		
 		if(this.model.gameState === GameState.WON) {
-			$('#status').text("Mission Succeeded!");
+			$('#status').text("Mission Succeeded: All mines identified!");
 		} else if (this.model.gameState === GameState.LOST) {
-			$('#status').text("Mission Failed");
+			$('#status').text("Mission Failed: You hit a mine!");
 		}
 	}
 }

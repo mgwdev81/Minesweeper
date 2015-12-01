@@ -34,7 +34,7 @@ body {
 }
 
 #gameTitle {
-  font-weight: bold;
+  font: 20px Impact;
 }
 
 #gameOptions {

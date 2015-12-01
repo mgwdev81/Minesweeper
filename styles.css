@@ -28,6 +28,11 @@ body {
   padding: 4px;
 }
 
+#statusPanel2 {
+  display: flex;
+  flex-direction: column;
+}
+
 #gameTitle {
   font-weight: bold;
 }
@@ -55,24 +60,11 @@ body {
   text-align: left;
 }
 
-#startGameButton {
-  /*width: 100%;*/
-}
-
 #statusPanel {
   display: flex;
   flex-direction: row;
   padding: 0;
   margin: auto;
-}
-
-#flagsAvailable {
-  height: 25px;
-  margin: 0;
-  padding: 0;
-  width: 65px;
-  color: lightgray;
-  text-align: left;
 }
 
 #status {
@@ -84,13 +76,21 @@ body {
   text-align: center;
 }
 
-#elapsedTime {
-  height: 25px;
-  margin: 0;
-  padding: 0;
-  width: 65px;
+#statusPanel2 {
+  display: flex;
+  flex-direction: column;
+}
+
+#flagsAvailable, #elapsedTime {
+  display: flex;
+  flex-direction: row;
   color: lightgray;
-  text-align: right;
+  padding-top: 4px;
+  padding-left: 4px;
+}
+
+#flagsAvailableLabel, #elapsedTimeLabel {
+  width: 100px;
 }
 
 #grid {
